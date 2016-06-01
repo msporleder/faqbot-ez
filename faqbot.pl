@@ -7,14 +7,14 @@ use Data::Dumper;
 use DBI;
 use DBIx::Connector;
 
-my $chan = $ARGV[0]; #'#fastly';
-my $username = $ARGV[1]; #"fastlyfaqbot";
-my $dbfile = $ARGV[2]; #"/home/msporled/dev/faqbot-ez/fastly-faq.sqlite";
+my $chan = $ARGV[0];
+my $username = $ARGV[1];
+my $dbfile = $ARGV[2];
 
 my $dbh = DBIx::Connector->connect("dbi:SQLite:dbname=$dbfile","","");
 my $cnd = AnyEvent->condvar;
-my $timer;
 my $con = AnyEvent::IRC::Client->new;
+my $timer;
 
 connect_to();
 
@@ -80,7 +80,7 @@ sub doc_lookup {
 }
 
 sub connect_to {
-	$con->connect("irc.freenode.net", 6667, { nick => "$username", user => "mspo.com", real => "mspo.com" } );
-	$con->send_srv (PRIVMSG => 'mspo', 'Hi there!');
+	$con->connect("irc.freenode.net", 6667, { nick => "$username", user => "github.com/msporleder/faqbot-ez", real => "$username,faqbot-ez" } );
+	$con->send_srv (PRIVMSG => 'mspo', 'Hi there!, I am $username, a faqbot-ez');
 	$con->send_srv (JOIN => $chan);
 }
