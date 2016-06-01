@@ -80,7 +80,7 @@ sub doc_lookup {
 }
 
 sub connect_to {
-	$con->connect("irc.freenode.net", 6667, { nick => "$username", user => "github.com/msporleder/faqbot-ez", real => "$username,faqbot-ez" } );
-	$con->send_srv (PRIVMSG => 'mspo', 'Hi there!, I am $username, a faqbot-ez');
+	$con->connect("irc.freenode.net", 6667, { nick => "$username", user => "${username}+faqbot-ez", real => "github.com/msporleder/faqbot-ez" } );
+	$con->send_srv (PRIVMSG => 'mspo', "Hi there!, I am $username, a faqbot-ez");
 	$con->send_srv (JOIN => $chan);
 }
