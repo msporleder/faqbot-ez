@@ -24,8 +24,13 @@ $con->reg_cb (
 	}
 );
 
-$con->reg_cb ( privatemsg => sub {
-		handle_msg(@_);
+$con->reg_cb (
+	privatemsg => sub {
+		my $msg = shift;
+		my ($user) = $msg->{'__oe_cbs'}[1][1]{'prefix'} =~ m#(^.+)\!#;
+		print Dumper $msg->{'__oe_cbs'}; #channel
+		print "user: $user\n";
+		handle_msg($msg, $user);
 	}
 );
 
@@ -56,7 +61,7 @@ sub handle_msg {
 	#print Dumper \$msg->{'__oe_cbs'}[1][0]; #channel
 	#print Dumper \$msg->{'__oe_cbs'}[1][1]{'params'}[-1]; #msg
 	my $msg = shift;
-	my $chan = shift;
+	my $channel = shift;
 	my $short_m = substr($msg->{'__oe_cbs'}[1][1]{'params'}[-1], 0, 500);
 	my $getpat = "^\!faq";
 	my $addpat = "^\!addfaq";
@@ -65,10 +70,11 @@ sub handle_msg {
 	if ( $short_m =~ /$getpat/ ) {
 		my ($faq) = $short_m =~ m#$getpat (.+)#;
 		if ($faq =~ m#^[a-zA-Z0-9_]+#) {
-			print "looking up $faq\n";
+			print "looking up $faq for $channel\n";
 			my $reply = doc_lookup($faq);
-			$reply ? $con->send_srv ( PRIVMSG => $chan, $reply ) : 1;
+			$reply ? $con->send_srv ( PRIVMSG => "$channel", $reply ) : 1;
 		}
+		return;
 	}
 	if ( $short_m =~ /$addpat/ ) {
 		my ($faq, $txt) = $short_m =~ m#$addpat (.+?)\s+(.+)#;
@@ -76,11 +82,12 @@ sub handle_msg {
 			print "adding $faq, $txt\n";
 			my $numr = $dbh->do('INSERT INTO "docs" VALUES (?, ?)', undef, ($faq, $txt));
 			if ($numr > 0) {
-				$con->send_srv ( PRIVMSG => "$chan", "added $faq" );
+				$con->send_srv ( PRIVMSG => "$channel", "added $faq" );
 			} else {
-				$con->send_src ( PRIVMSG => "$chan", "err: $dbh->errstr" );
+				$con->send_src ( PRIVMSG => "$channel", "err: $dbh->errstr" );
 			}
 		}
+		return;
 	}
 	if ( $short_m =~ /$delpat/ ) {
 		my ($faq) = $short_m =~ m#$delpat (.+)#;
@@ -88,10 +95,11 @@ sub handle_msg {
 			print "deleting $faq\n";
 			my $numr = $dbh->do('DELETE FROM "docs" WHERE item=?', undef, ($faq)) or print $dbh->errstr;
 			if ($numr > 0) {
-				$con->send_srv ( PRIVMSG => "$chan", "added $faq" );
+				$con->send_srv ( PRIVMSG => "$channel", "added $faq" );
 			} else {
-				$con->send_src ( PRIVMSG => "$chan", "err: $dbh->errstr" );
+				$con->send_src ( PRIVMSG => "$channel", "err: $dbh->errstr" );
 			}
 		}
+		return;
 	}
 }
