@@ -1,0 +1,2 @@
+CREATE TABLE docs (item varchar(20) PRIMARY KEY, reply text);
+INSERT INTO docs VALUES ("help", "bothelp: !faq, !addfaq, !delfaq");
