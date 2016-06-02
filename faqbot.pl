@@ -28,8 +28,6 @@ $con->reg_cb (
 	privatemsg => sub {
 		my $msg = shift;
 		my ($user) = $msg->{'__oe_cbs'}[1][1]{'prefix'} =~ m#(^.+)\!#;
-		print Dumper $msg->{'__oe_cbs'}; #channel
-		print "user: $user\n";
 		handle_msg($msg, $user);
 	}
 );
