@@ -1,4 +1,4 @@
-#!/usr/pkg/bin/perl
+#!/usr/bin/env perl
 use AnyEvent;
 use AnyEvent::IRC::Client;
 use AnyEvent::IRC::Util qw/parse_irc_msg/;
