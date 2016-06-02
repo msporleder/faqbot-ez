@@ -20,45 +20,12 @@ connect_to();
 
 $con->reg_cb (
 	publicmsg => sub {
-		my ($msg, $channel) = @_;
-		#print Dumper \$msg->{'__oe_cbs'}[1][0]; #channel
-		#print Dumper \$msg->{'__oe_cbs'}[1][1]{'params'}[-1]; #msg
-		my $short_m = substr($msg->{'__oe_cbs'}[1][1]{'params'}[-1], 0, 500);
-		print "short_m: $short_m\n";
-
-		my $getpat = "^\!faq";
-		my $addpat = "^\!addfaq";
-		my $delpat = "^\!delfaq";
-		#look for stuff
-		if ( $short_m =~ /$getpat/ ) {
-			my ($faq) = $short_m =~ m#$getpat (.+)#;
-			if ($faq =~ m#^[a-zA-Z0-9_]+#) {
-				print "looking up $faq\n";
-				my $reply = doc_lookup($faq);
-				$reply ? $con->send_srv ( PRIVMSG => $chan, $reply ) : 1;
-			}
-		}
-		if ( $short_m =~ /$addpat/ ) {
-			my ($faq, $txt) = $short_m =~ m#$addpat (.+?)\s+(.+)#;
-			if ($faq =~ m#^[a-zA-Z0-9_]+#) {
-				print "adding $faq, $txt\n";
-				$dbh->do('INSERT INTO "docs" VALUES (?, ?)', undef, ($faq, $txt)) or print $dbh->errstr;
-			}
-		}
-		if ( $short_m =~ /$delpat/ ) {
-			my ($faq) = $short_m =~ m#$delpat (.+)#;
-			if ($faq =~ m#^[a-zA-Z0-9_]+#) {
-				print "deleting $faq\n";
-				$dbh->do('DELETE FROM "docs" WHERE item=?', undef, ($faq)) or print $dbh->errstr;
-			}
-		}
+		handle_msg(@_);
 	}
 );
 
 $con->reg_cb ( privatemsg => sub {
-		my ($msg, $channel) = @_;
-		#print Dumper \$msg;
-		#print Dumper \$channel;
+		handle_msg(@_);
 	}
 );
 
@@ -83,4 +50,48 @@ sub connect_to {
 	$con->connect("irc.freenode.net", 6667, { nick => "$username", user => "${username}+faqbot-ez", real => "github.com/msporleder/faqbot-ez" } );
 	$con->send_srv (PRIVMSG => 'mspo', "Hi there!, I am $username, a faqbot-ez");
 	$con->send_srv (JOIN => $chan);
+}
+
+sub handle_msg {
+	#print Dumper \$msg->{'__oe_cbs'}[1][0]; #channel
+	#print Dumper \$msg->{'__oe_cbs'}[1][1]{'params'}[-1]; #msg
+	my $msg = shift;
+	my $chan = shift;
+	my $short_m = substr($msg->{'__oe_cbs'}[1][1]{'params'}[-1], 0, 500);
+	my $getpat = "^\!faq";
+	my $addpat = "^\!addfaq";
+	my $delpat = "^\!delfaq";
+	#look for stuff
+	if ( $short_m =~ /$getpat/ ) {
+		my ($faq) = $short_m =~ m#$getpat (.+)#;
+		if ($faq =~ m#^[a-zA-Z0-9_]+#) {
+			print "looking up $faq\n";
+			my $reply = doc_lookup($faq);
+			$reply ? $con->send_srv ( PRIVMSG => $chan, $reply ) : 1;
+		}
+	}
+	if ( $short_m =~ /$addpat/ ) {
+		my ($faq, $txt) = $short_m =~ m#$addpat (.+?)\s+(.+)#;
+		if ($faq =~ m#^[a-zA-Z0-9_]+#) {
+			print "adding $faq, $txt\n";
+			my $numr = $dbh->do('INSERT INTO "docs" VALUES (?, ?)', undef, ($faq, $txt));
+			if ($numr > 0) {
+				$con->send_srv ( PRIVMSG => "$chan", "added $faq" );
+			} else {
+				$con->send_src ( PRIVMSG => "$chan", "err: $dbh->errstr" );
+			}
+		}
+	}
+	if ( $short_m =~ /$delpat/ ) {
+		my ($faq) = $short_m =~ m#$delpat (.+)#;
+		if ($faq =~ m#^[a-zA-Z0-9_]+#) {
+			print "deleting $faq\n";
+			my $numr = $dbh->do('DELETE FROM "docs" WHERE item=?', undef, ($faq)) or print $dbh->errstr;
+			if ($numr > 0) {
+				$con->send_srv ( PRIVMSG => "$chan", "added $faq" );
+			} else {
+				$con->send_src ( PRIVMSG => "$chan", "err: $dbh->errstr" );
+			}
+		}
+	}
 }
