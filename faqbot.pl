@@ -108,9 +108,11 @@ sub handle_msg {
 	}
 	if ( $short_m =~ /$lspat/ ) {
 		my $faqs = doc_ls();
-		my $list = join("," @{$faqs});
-		print Dumper $faqs;
-		print Dumper $list;
+		my @f;
+		foreach my $x (@{$faqs}) {
+			push(@f, $x->[0]);
+		}
+		my $list = join(",", @f);
 		if ($faqs) {
 			$con->send_srv ( PRIVMSG => "$channel", $list );
 		}
