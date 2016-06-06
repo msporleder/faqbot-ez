@@ -49,6 +49,11 @@ sub doc_lookup {
 	return $reply;
 }
 
+sub doc_ls {
+	my $reply = $dbh->selectall_arrayref("SELECT item FROM docs");
+	return $reply;
+}
+
 sub connect_to {
 	$con->connect("irc.freenode.net", 6667, { nick => "$username", user => "${username}+faqbot-ez", real => "github.com/msporleder/faqbot-ez" } );
 	$con->send_srv (PRIVMSG => 'mspo', "Hi there!, I am $username, a faqbot-ez");
@@ -64,6 +69,7 @@ sub handle_msg {
 	my $getpat = "^\!faq";
 	my $addpat = "^\!addfaq";
 	my $delpat = "^\!delfaq";
+	my $lspat = "^\!lsfaq";
 	#look for stuff
 	if ( $short_m =~ /$getpat/ ) {
 		my ($faq) = $short_m =~ m#$getpat (.+)#;
@@ -97,6 +103,16 @@ sub handle_msg {
 			} else {
 				$con->send_src ( PRIVMSG => "$channel", "err: $dbh->errstr" );
 			}
+		}
+		return;
+	}
+	if ( $short_m =~ /$lspat/ ) {
+		my $faqs = doc_ls();
+		my $list = join("," @{$faqs});
+		print Dumper $faqs;
+		print Dumper $list;
+		if ($faqs) {
+			$con->send_srv ( PRIVMSG => "$channel", $list );
 		}
 		return;
 	}
