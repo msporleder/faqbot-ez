@@ -93,7 +93,7 @@ sub handle_msg {
 			print "deleting $faq\n";
 			my $numr = $dbh->do('DELETE FROM "docs" WHERE item=?', undef, ($faq)) or print $dbh->errstr;
 			if ($numr > 0) {
-				$con->send_srv ( PRIVMSG => "$channel", "added $faq" );
+				$con->send_srv ( PRIVMSG => "$channel", "deleted $faq" );
 			} else {
 				$con->send_src ( PRIVMSG => "$channel", "err: $dbh->errstr" );
 			}
